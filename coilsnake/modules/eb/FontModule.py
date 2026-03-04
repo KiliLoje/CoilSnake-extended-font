@@ -142,12 +142,19 @@ class FontModule(EbModule):
             patch(rom, 3, 0xC47D3B, [0xE9, 0x20, 0x00])
             patch(rom, 3, 0xC47D3E, [0xEA, 0xEA, 0xEA])
 
+            # SBC #80   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C4827B:
+            # Renders a full text character into the VWF buffer
+            patch(rom, 3, 0xC48289, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC4828C, [0xEA, 0xEA, 0xEA])
+
             # SBC #$50   -> SBC #$20
             # AND #$007F -> NOP NOP NOP
             # this is used at $C4999B:
             # Render a full large font character to the VWF buffer, adjusting flyoverByteOffset and flyoverPixelOffset as appropriate
-            patch(rom, 3, 0xC48289, [0xE9, 0x20, 0x00])
-            patch(rom, 3, 0xC4828C, [0xEA, 0xEA, 0xEA])
+            patch(rom, 3, 0xC499A6, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC499A9, [0xEA, 0xEA, 0xEA])
 
             # SBC #80   -> SBC #$20
             # AND #$007F -> NOP NOP NOP
