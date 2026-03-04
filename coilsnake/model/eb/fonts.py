@@ -53,7 +53,13 @@ class EbFont(object):
             self.tileset.from_block(block=block, offset=tileset_offset, bpp=1)
             for i in range(223, -1, -1):
                 if i < 0x30 or i >= 0x90:
-                    self.tileset.clear_tile(i, color=1)
+                    # making the tile white if it's a used control code
+                    # to indicate that the tile shouldn't be used
+                    if i == 0 or i == 2 or i == 14:
+                        self.tileset.clear_tile(i, color=0)
+                    else:
+                        self.tileset.clear_tile(i, color=1)
+                # copy the tileset to itself to get the new rows att the beginning
                 else:
                     self.tileset.tiles[i] = self.tileset[i - 0x30]
             self.character_widths = block[
