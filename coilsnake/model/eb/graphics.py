@@ -3,13 +3,25 @@ from copy import deepcopy
 
 from PIL import Image
 
-from coilsnake.exceptions.common.exceptions import InvalidArgumentError, OutOfBoundsError, InvalidUserDataError
+from coilsnake.exceptions.common.exceptions import (
+    InvalidArgumentError,
+    OutOfBoundsError,
+    InvalidUserDataError,
+)
 from coilsnake.model.eb.blocks import EbCompressibleBlock
 from coilsnake.model.eb.palettes import EbPalette, EbColor
 from coilsnake.util.common.type import EqualityMixin, StringRepresentationMixin
-from coilsnake.util.eb.graphics import read_2bpp_graphic_from_block, read_4bpp_graphic_from_block, \
-    read_8bpp_graphic_from_block, read_1bpp_graphic_from_block, write_2bpp_graphic_to_block, \
-    write_4bpp_graphic_to_block, write_8bpp_graphic_to_block, write_1bpp_graphic_to_block, hash_tile
+from coilsnake.util.eb.graphics import (
+    read_2bpp_graphic_from_block,
+    read_4bpp_graphic_from_block,
+    read_8bpp_graphic_from_block,
+    read_1bpp_graphic_from_block,
+    write_2bpp_graphic_to_block,
+    write_4bpp_graphic_to_block,
+    write_8bpp_graphic_to_block,
+    write_1bpp_graphic_to_block,
+    hash_tile,
+)
 
 
 _EB_GRAPHIC_TILESET_SUPPORTED_BPP_FORMATS = frozenset([1, 2, 4, 8])
@@ -27,20 +39,34 @@ class EbGraphicTileset(EqualityMixin):
         :param tile_width: width in pixels of each of the tileset's individual tiles
         :param tile_height: height in pixels of each of the tileset's individual tiles"""
         if num_tiles <= 0:
-            raise InvalidArgumentError("Couldn't create EbGraphicTileset with invalid num_tiles[{}]".format(num_tiles))
+            raise InvalidArgumentError(
+                "Couldn't create EbGraphicTileset with invalid num_tiles[{}]".format(
+                    num_tiles
+                )
+            )
         self.num_tiles_maximum = num_tiles
 
         if tile_width <= 0:
-            raise InvalidArgumentError("Couldn't create EbGraphicTileset with invalid tile_width[{}]".format(
-                tile_width))
+            raise InvalidArgumentError(
+                "Couldn't create EbGraphicTileset with invalid tile_width[{}]".format(
+                    tile_width
+                )
+            )
         elif (tile_width % 8) != 0:
-            raise InvalidArgumentError(("Couldn't create EbGraphicTileset with a tile_height[{}] that is not a "
-                                        "multiple of 8").format(tile_height))
+            raise InvalidArgumentError(
+                (
+                    "Couldn't create EbGraphicTileset with a tile_height[{}] that is not a "
+                    "multiple of 8"
+                ).format(tile_height)
+            )
         self.tile_width = tile_width
 
         if tile_height <= 0:
-            raise InvalidArgumentError("Couldn't create EbGraphicTileset with invalid tile height[{}]".format(
-                tile_height))
+            raise InvalidArgumentError(
+                "Couldn't create EbGraphicTileset with invalid tile height[{}]".format(
+                    tile_height
+                )
+            )
         self.tile_height = tile_height
 
         self.tiles = []
@@ -51,27 +77,46 @@ class EbGraphicTileset(EqualityMixin):
         """Reads in a tileset from the specified offset in the block.
         :param bpp: The number of bits used to represent each pixel by the block representation."""
         if bpp not in _EB_GRAPHIC_TILESET_SUPPORTED_BPP_FORMATS:
-            raise NotImplementedError("Don't know how to read graphical tile data of bpp[{}]".format(bpp))
+            raise NotImplementedError(
+                "Don't know how to read graphical tile data of bpp[{}]".format(bpp)
+            )
         elif (bpp != 1) and (self.tile_height != 8):
-            raise NotImplementedError(("Don't know how to read graphical tile data of width[{}], height[{}], "
-                                      "and bpp[{}]").format(self.tile_width, self.tile_height, bpp))
+            raise NotImplementedError(
+                (
+                    "Don't know how to read graphical tile data of width[{}], height[{}], "
+                    "and bpp[{}]"
+                ).format(self.tile_width, self.tile_height, bpp)
+            )
 
         self._num_tiles_used = 0
         self._used_tiles = dict()
-        self.tiles = [[[0 for x in range(self.tile_width)] for y in range(self.tile_height)]
-                      for n in range(self.num_tiles_maximum)]
+        self.tiles = [
+            [[0 for x in range(self.tile_width)] for y in range(self.tile_height)]
+            for n in range(self.num_tiles_maximum)
+        ]
         for tile in self.tiles:
             try:
                 if bpp == 2:
-                    offset += read_2bpp_graphic_from_block(source=block, target=tile, offset=offset)
+                    offset += read_2bpp_graphic_from_block(
+                        source=block, target=tile, offset=offset
+                    )
                 elif bpp == 4:
-                    offset += read_4bpp_graphic_from_block(source=block, target=tile, offset=offset)
+                    offset += read_4bpp_graphic_from_block(
+                        source=block, target=tile, offset=offset
+                    )
                 elif bpp == 8:
-                    offset += read_8bpp_graphic_from_block(source=block, target=tile, offset=offset)
+                    offset += read_8bpp_graphic_from_block(
+                        source=block, target=tile, offset=offset
+                    )
                 else:  # bpp == 1
                     for x in range(0, self.tile_width, 8):
-                        offset += read_1bpp_graphic_from_block(source=block, target=tile, offset=offset,
-                                                               x=x, height=self.tile_height)
+                        offset += read_1bpp_graphic_from_block(
+                            source=block,
+                            target=tile,
+                            offset=offset,
+                            x=x,
+                            height=self.tile_height,
+                        )
                 self._num_tiles_used += 1
             except OutOfBoundsError:
                 break  # Stop if we begin to read past the end of the block
@@ -80,22 +125,38 @@ class EbGraphicTileset(EqualityMixin):
         """Writes this tileset to the specified offset in the block.
         :param bpp: The number of bits used to represent each pixel by the block representation."""
         if bpp not in _EB_GRAPHIC_TILESET_SUPPORTED_BPP_FORMATS:
-            raise NotImplementedError("Don't know how to read graphical tile data of bpp[{}]".format(bpp))
+            raise NotImplementedError(
+                "Don't know how to read graphical tile data of bpp[{}]".format(bpp)
+            )
         elif (bpp != 1) and (self.tile_height != 8):
-            raise NotImplementedError("Don't know how to write image data of width[{}], height[{}], and bpp[{}]"
-                                      .format(self.tile_width, self.tile_height, bpp))
+            raise NotImplementedError(
+                "Don't know how to write image data of width[{}], height[{}], and bpp[{}]".format(
+                    self.tile_width, self.tile_height, bpp
+                )
+            )
 
         for tile in self.tiles:
             if bpp == 2:
-                offset += write_2bpp_graphic_to_block(source=tile, target=block, offset=offset)
+                offset += write_2bpp_graphic_to_block(
+                    source=tile, target=block, offset=offset
+                )
             elif bpp == 4:
-                offset += write_4bpp_graphic_to_block(source=tile, target=block, offset=offset)
+                offset += write_4bpp_graphic_to_block(
+                    source=tile, target=block, offset=offset
+                )
             elif bpp == 8:
-                offset += write_8bpp_graphic_to_block(source=tile, target=block, offset=offset)
+                offset += write_8bpp_graphic_to_block(
+                    source=tile, target=block, offset=offset
+                )
             else:  # bpp == 1
                 for x in range(0, self.tile_width, 8):
-                    offset += write_1bpp_graphic_to_block(source=tile, target=block, offset=offset,
-                                                          x=x, height=self.tile_height)
+                    offset += write_1bpp_graphic_to_block(
+                        source=tile,
+                        target=block,
+                        offset=offset,
+                        x=x,
+                        height=self.tile_height,
+                    )
 
     @staticmethod
     def tiles_from_parameters(block_size, tile_width=8, tile_height=8, bpp=2):
@@ -119,7 +180,12 @@ class EbGraphicTileset(EqualityMixin):
         """Returns the size required to represent this tileset in a block.
         :param bpp: The number of bits used to represent each pixel by the block representation.
         :param trimmed: When True, trim the size to number of tiles in use; otherwise to the maximum"""
-        return self.block_size_from_parameters(self._num_tiles_used if trimmed else self.num_tiles_maximum, self.tile_width, self.tile_height, bpp)
+        return self.block_size_from_parameters(
+            self._num_tiles_used if trimmed else self.num_tiles_maximum,
+            self.tile_width,
+            self.tile_height,
+            bpp,
+        )
 
     def from_image(self, image, arrangement, palette):
         """Reads in a tileset from an image, given a known arrangement and palette which were used to construct the
@@ -131,8 +197,10 @@ class EbGraphicTileset(EqualityMixin):
         :param palette: the known arrangement which describes how the image is rendered"""
         image_data = image.load()
         already_read_tiles = set()
-        self.tiles = [[[0 for x in range(self.tile_width)] for y in range(self.tile_height)]
-                      for n in range(self.num_tiles_maximum)]
+        self.tiles = [
+            [[0 for x in range(self.tile_width)] for y in range(self.tile_height)]
+            for n in range(self.num_tiles_maximum)
+        ]
         for y in range(arrangement.height):
             for x in range(arrangement.width):
                 arrangement_item = arrangement[x, y]
@@ -142,7 +210,10 @@ class EbGraphicTileset(EqualityMixin):
                     image_y = y * self.tile_height
                     for tile_y, tile_row in enumerate(tile):
                         for tile_x in range(self.tile_width):
-                            tile_row[tile_x] = image_data[image_x + tile_x, image_y] % palette.subpalette_length
+                            tile_row[tile_x] = (
+                                image_data[image_x + tile_x, image_y]
+                                % palette.subpalette_length
+                            )
                         image_y += 1
                     already_read_tiles.add(arrangement_item.tile)
 
@@ -196,23 +267,36 @@ class EbGraphicTileset(EqualityMixin):
         return tile_id, False, True
 
     def clear_tile(self, tile_id, color=0):
-        tile = [[color for x in range(self.tile_width)] for y in range(self.tile_height)]
+        tile = [
+            [color for x in range(self.tile_width)] for y in range(self.tile_height)
+        ]
         self.tiles[tile_id] = tile
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and (self.num_tiles_maximum == other.num_tiles_maximum)
-                and (self.tile_width == other.tile_width)
-                and (self.tile_height == other.tile_height)
-                and (self.tiles == other.tiles))
+        return (
+            isinstance(other, self.__class__)
+            and (self.num_tiles_maximum == other.num_tiles_maximum)
+            and (self.tile_width == other.tile_width)
+            and (self.tile_height == other.tile_height)
+            and (self.tiles == other.tiles)
+        )
 
     def __getitem__(self, key):
         return self.tiles[key]
 
+    def __setitem__(self, key, val):
+        self.tiles[key] = val
+
 
 class EbTileArrangementItem(EqualityMixin, StringRepresentationMixin):
-    def __init__(self, tile=0, subpalette=0, is_vertically_flipped=False, is_horizontally_flipped=False,
-                 is_priority=False):
+    def __init__(
+        self,
+        tile=0,
+        subpalette=0,
+        is_vertically_flipped=False,
+        is_horizontally_flipped=False,
+        is_priority=False,
+    ):
         self.tile = tile
         self.subpalette = subpalette
         self.is_vertically_flipped = is_vertically_flipped
@@ -221,7 +305,7 @@ class EbTileArrangementItem(EqualityMixin, StringRepresentationMixin):
         self.check_validity()
 
     def check_validity(self):
-        if self.tile < 0 or self.tile > 0x3ff:
+        if self.tile < 0 or self.tile > 0x3FF:
             raise InvalidArgumentError("Invalid tile[{}]".format(self.tile))
         if self.subpalette < 0 or self.subpalette > 7:
             raise InvalidArgumentError("Invalid subpalette[{}]".format(self.subpalette))
@@ -231,18 +315,22 @@ class EbTileArrangementItem(EqualityMixin, StringRepresentationMixin):
         self.is_vertically_flipped = (data & 0x8000) != 0
         self.is_horizontally_flipped = (data & 0x4000) != 0
         self.is_priority = (data & 0x2000) != 0
-        self.subpalette = (data & 0x1c00) >> 10
-        self.tile = data & 0x3ff
+        self.subpalette = (data & 0x1C00) >> 10
+        self.tile = data & 0x3FF
 
     def to_block(self, block, offset=0):
         self.check_validity()
-        block.write_multi(offset,
-                          ((self.is_vertically_flipped << 15)
-                           | (self.is_horizontally_flipped << 14)
-                           | (self.is_priority << 13)
-                           | (self.subpalette << 10)
-                           | self.tile),
-                          2)
+        block.write_multi(
+            offset,
+            (
+                (self.is_vertically_flipped << 15)
+                | (self.is_horizontally_flipped << 14)
+                | (self.is_priority << 13)
+                | (self.subpalette << 10)
+                | self.tile
+            ),
+            2,
+        )
 
 
 class EbTileArrangement(EqualityMixin):
@@ -253,12 +341,21 @@ class EbTileArrangement(EqualityMixin):
         :param width: the width of the arrangement in tiles
         :param height: the height of the arrangement in tiles"""
         if width <= 0:
-            raise InvalidArgumentError("Couldn't create EbTileArrangement with invalid width[{}]".format(width))
+            raise InvalidArgumentError(
+                "Couldn't create EbTileArrangement with invalid width[{}]".format(width)
+            )
         self.width = width
         if height <= 0:
-            raise InvalidArgumentError("Couldn't create EbTileArrangement with invalid height[{}]".format(height))
+            raise InvalidArgumentError(
+                "Couldn't create EbTileArrangement with invalid height[{}]".format(
+                    height
+                )
+            )
         self.height = height
-        self.arrangement = [[EbTileArrangementItem() for x in range(self.width)] for y in range(self.height)]
+        self.arrangement = [
+            [EbTileArrangementItem() for x in range(self.width)]
+            for y in range(self.height)
+        ]
 
     def from_block(self, block, offset=0):
         for row in self.arrangement:
@@ -286,7 +383,7 @@ class EbTileArrangement(EqualityMixin):
                 if ignore_subpalettes:
                     palette_offset = 0
                 else:
-                    palette_offset = item.subpalette*palette.subpalette_length
+                    palette_offset = item.subpalette * palette.subpalette_length
                 for tile_y in range(tileset.tile_height):
                     for tile_x in range(tileset.tile_width):
                         pixel_x, pixel_y = tile_x, tile_y
@@ -294,29 +391,39 @@ class EbTileArrangement(EqualityMixin):
                             pixel_y = tileset.tile_height - pixel_y - 1
                         if item.is_horizontally_flipped:
                             pixel_x = tileset.tile_width - pixel_x - 1
-                        image_data[offset_x + tile_x, offset_y + tile_y] = tile[pixel_y][pixel_x] + palette_offset
+                        image_data[offset_x + tile_x, offset_y + tile_y] = (
+                            tile[pixel_y][pixel_x] + palette_offset
+                        )
                 offset_x += tileset.tile_width
             offset_y += tileset.tile_height
 
     def image(self, tileset, palette, ignore_subpalettes=False):
-        image = Image.new("P", (self.width * tileset.tile_width,
-                                self.height * tileset.tile_height),
-                          None)
+        image = Image.new(
+            "P",
+            (self.width * tileset.tile_width, self.height * tileset.tile_height),
+            None,
+        )
         self.to_image(image, tileset, palette, ignore_subpalettes)
         return image
 
-    def from_image(self, image, tileset, palette, no_flip=False, dedup=True, is_animation=False):
+    def from_image(
+        self, image, tileset, palette, no_flip=False, dedup=True, is_animation=False
+    ):
         if palette.num_subpalettes == 1:
-            self._from_image_with_single_subpalette(image, tileset, palette, no_flip, dedup, is_animation)
+            self._from_image_with_single_subpalette(
+                image, tileset, palette, no_flip, dedup, is_animation
+            )
         else:
             # Multiple subpalettes, so we have to figure out which tile should use which subpalette
             palette.from_image(image)
             rgb_image = image.convert("RGB")
-            del(image)
+            del image
             rgb_image_data = rgb_image.load()
             del rgb_image
 
-            tile = [array('B', [0] * tileset.tile_width) for i in range(tileset.tile_height)]
+            tile = [
+                array("B", [0] * tileset.tile_width) for i in range(tileset.tile_height)
+            ]
 
             for arrangement_y in range(self.height):
                 image_y = arrangement_y * tileset.tile_height
@@ -328,23 +435,31 @@ class EbTileArrangement(EqualityMixin):
                         image_tile_y = image_y + tile_y
                         for tile_x in range(tileset.tile_width):
                             r, g, b = rgb_image_data[image_x + tile_x, image_tile_y]
-                            tile_colors.add(EbColor(r=r & 0xf8, g=g & 0xf8, b=b & 0xf8))
+                            tile_colors.add(EbColor(r=r & 0xF8, g=g & 0xF8, b=b & 0xF8))
 
                     try:
                         subpalette_id = palette.get_subpalette_for_colors(tile_colors)
                     except InvalidArgumentError as e:
                         raise InvalidUserDataError(
                             "Could not fit all colors in {}x{} square at ({},{}) into a single {}-color subpalette\nColors: {}\nPalette: {}".format(
-                                tileset.tile_width, tileset.tile_height, image_x, image_y, palette.subpalette_length,
-                                list(tile_colors), palette.subpalettes
-                            ))
+                                tileset.tile_width,
+                                tileset.tile_height,
+                                image_x,
+                                image_y,
+                                palette.subpalette_length,
+                                list(tile_colors),
+                                palette.subpalettes,
+                            )
+                        )
 
                     for tile_y in range(tileset.tile_height):
                         image_tile_y = image_y + tile_y
                         for tile_x in range(tileset.tile_width):
                             image_tile_x = image_x + tile_x
-                            tile[tile_y][tile_x] = palette.get_color_id(rgb_image_data[image_tile_x, image_tile_y],
-                                                                        subpalette_id)
+                            tile[tile_y][tile_x] = palette.get_color_id(
+                                rgb_image_data[image_tile_x, image_tile_y],
+                                subpalette_id,
+                            )
 
                     tile_id, vflip, hflip = tileset.add_tile(tile, no_flip, dedup)
                     arrangement_item = self.arrangement[arrangement_y][arrangement_x]
@@ -354,12 +469,16 @@ class EbTileArrangement(EqualityMixin):
                     arrangement_item.is_horizontally_flipped = hflip
                     arrangement_item.is_priority = is_animation
 
-    def _from_image_with_single_subpalette(self, image, tileset, palette, no_flip=False, dedup=True, is_animation=False):
+    def _from_image_with_single_subpalette(
+        self, image, tileset, palette, no_flip=False, dedup=True, is_animation=False
+    ):
         # Don't need to do any subpalette fitting because there's only one subpalette
         palette.from_image(image)
         image_data = image.load()
 
-        tile = [array('B', [0] * tileset.tile_width) for i in range(tileset.tile_height)]
+        tile = [
+            array("B", [0] * tileset.tile_width) for i in range(tileset.tile_height)
+        ]
 
         for arrangement_y in range(self.height):
             image_y = arrangement_y * tileset.tile_height
@@ -383,24 +502,46 @@ class EbTileArrangement(EqualityMixin):
     def __getitem__(self, key):
         x, y = key
         if x < 0 or y < 0 or x >= self.width or y >= self.height:
-            raise InvalidArgumentError("Couldn't get arrangement item[{},{}] from arrangement of size[{}x{}]".format(
-                x, y, self.width, self.height))
+            raise InvalidArgumentError(
+                "Couldn't get arrangement item[{},{}] from arrangement of size[{}x{}]".format(
+                    x, y, self.width, self.height
+                )
+            )
         return self.arrangement[y][x]
 
 
 class EbCompressedGraphic(object):
-    def __init__(self, num_tiles, tile_width, tile_height, bpp, arrangement_width, arrangement_height,
-                 num_palettes, num_subpalettes, subpalette_length, compressed_palettes=True):
+    def __init__(
+        self,
+        num_tiles,
+        tile_width,
+        tile_height,
+        bpp,
+        arrangement_width,
+        arrangement_height,
+        num_palettes,
+        num_subpalettes,
+        subpalette_length,
+        compressed_palettes=True,
+    ):
         self.bpp = bpp
         self.compressed_palettes = compressed_palettes
 
-        self.graphics = EbGraphicTileset(num_tiles=num_tiles, tile_width=tile_width, tile_height=tile_height)
+        self.graphics = EbGraphicTileset(
+            num_tiles=num_tiles, tile_width=tile_width, tile_height=tile_height
+        )
         if arrangement_width and arrangement_height:
-            self.arrangement = EbTileArrangement(width=arrangement_width, height=arrangement_height)
+            self.arrangement = EbTileArrangement(
+                width=arrangement_width, height=arrangement_height
+            )
         else:
             self.arrangement = None
-        self.palettes = [EbPalette(num_subpalettes=num_subpalettes, subpalette_length=subpalette_length)
-                         for x in range(num_palettes)]
+        self.palettes = [
+            EbPalette(
+                num_subpalettes=num_subpalettes, subpalette_length=subpalette_length
+            )
+            for x in range(num_palettes)
+        ]
 
     def from_block(self, block, graphics_offset, arrangement_offset, palette_offsets):
         with EbCompressibleBlock() as compressed_block:
@@ -409,19 +550,25 @@ class EbCompressedGraphic(object):
 
         if self.arrangement:
             with EbCompressibleBlock() as compressed_block:
-                compressed_block.from_compressed_block(block=block, offset=arrangement_offset)
+                compressed_block.from_compressed_block(
+                    block=block, offset=arrangement_offset
+                )
                 self.arrangement.from_block(block=compressed_block, offset=0)
 
         for i, palette_offset in enumerate(palette_offsets):
             if self.compressed_palettes:
                 with EbCompressibleBlock() as compressed_block:
-                    compressed_block.from_compressed_block(block=block, offset=palette_offset)
+                    compressed_block.from_compressed_block(
+                        block=block, offset=palette_offset
+                    )
                     self.palettes[i].from_block(block=compressed_block, offset=0)
             else:
                 self.palettes[i].from_block(block=block, offset=palette_offset)
 
     def to_block(self, block):
-        with EbCompressibleBlock(self.graphics.block_size(bpp=self.bpp)) as compressed_block:
+        with EbCompressibleBlock(
+            self.graphics.block_size(bpp=self.bpp)
+        ) as compressed_block:
             self.graphics.to_block(block=compressed_block, offset=0, bpp=self.bpp)
             compressed_block.compress()
             graphics_offset = block.allocate(data=compressed_block)
@@ -478,11 +625,13 @@ class EbCompanyLogo(EbCompressedGraphic):
             arrangement_height=28,
             num_palettes=1,
             num_subpalettes=5,
-            subpalette_length=4
+            subpalette_length=4,
         )
 
     def from_block(self, block, graphics_offset, arrangement_offset, palette_offsets):
-        super(EbCompanyLogo, self).from_block(block, graphics_offset, arrangement_offset, palette_offsets)
+        super(EbCompanyLogo, self).from_block(
+            block, graphics_offset, arrangement_offset, palette_offsets
+        )
 
         # The first color of every subpalette after subpalette 0 is ignored and drawn as the first color subpalette 0
         #  instead
@@ -511,7 +660,7 @@ class EbAttractModeLogo(EbCompressedGraphic):
             arrangement_height=32,
             num_palettes=1,
             num_subpalettes=1,
-            subpalette_length=4
+            subpalette_length=4,
         )
 
 
@@ -526,7 +675,7 @@ class EbGasStationLogo(EbCompressedGraphic):
             arrangement_height=32,
             num_palettes=3,
             num_subpalettes=1,
-            subpalette_length=256
+            subpalette_length=256,
         )
 
 
@@ -541,27 +690,38 @@ class EbTownMap(EbCompressedGraphic):
             arrangement_height=28,
             num_palettes=1,
             num_subpalettes=2,
-            subpalette_length=16
+            subpalette_length=16,
         )
 
     def from_block(self, block, offset):
         with EbCompressibleBlock() as compressed_block:
             compressed_block.from_compressed_block(block=block, offset=offset)
             self.palettes[0].from_block(block=compressed_block, offset=0)
-            self.arrangement.from_block(block=compressed_block, offset=self.palettes[0].block_size())
-            self.graphics.from_block(block=compressed_block,
-                                     offset=self.palettes[0].block_size() + 2048,
-                                     bpp=self.bpp)
+            self.arrangement.from_block(
+                block=compressed_block, offset=self.palettes[0].block_size()
+            )
+            self.graphics.from_block(
+                block=compressed_block,
+                offset=self.palettes[0].block_size() + 2048,
+                bpp=self.bpp,
+            )
 
     def to_block(self, rom):
         # Arrangement space is 2048 bytes long since it's 32x32x2 in VRAM
-        with EbCompressibleBlock(size=self.palettes[0].block_size() + 2048 + self.graphics.block_size(bpp=self.bpp)) \
-                as compressed_block:
+        with EbCompressibleBlock(
+            size=self.palettes[0].block_size()
+            + 2048
+            + self.graphics.block_size(bpp=self.bpp)
+        ) as compressed_block:
             self.palettes[0].to_block(block=compressed_block, offset=0)
-            self.arrangement.to_block(block=compressed_block, offset=self.palettes[0].block_size())
-            self.graphics.to_block(block=compressed_block,
-                                   offset=self.palettes[0].block_size() + 2048,
-                                   bpp=self.bpp)
+            self.arrangement.to_block(
+                block=compressed_block, offset=self.palettes[0].block_size()
+            )
+            self.graphics.to_block(
+                block=compressed_block,
+                offset=self.palettes[0].block_size() + 2048,
+                bpp=self.bpp,
+            )
             compressed_block.compress()
             return rom.allocate(data=compressed_block)
 
@@ -587,8 +747,9 @@ class EbTownMapIcons(EbCompressedGraphic):
             num_palettes=1,
             num_subpalettes=2,
             subpalette_length=16,
-            compressed_palettes=False
+            compressed_palettes=False,
         )
+
 
 class EbCastGraphic(EbCompressedGraphic):
     def __init__(self, name, num_8x8_tiles):
@@ -602,23 +763,25 @@ class EbCastGraphic(EbCompressedGraphic):
             num_palettes=1,
             num_subpalettes=1,
             subpalette_length=4,
-            compressed_palettes=False
+            compressed_palettes=False,
         )
 
         self.name = name
         self.saved_arrangement = None
 
     def path(self):
-        return 'Cast/{}'.format(self.name)
+        return "Cast/{}".format(self.name)
 
     def cast_arrangement(self):
         if self.saved_arrangement == None:
             tiles = self.graphics.num_tiles_maximum
             arrangement_height = 2
             arrangement_width = tiles // arrangement_height
-            layout_width  = 16
+            layout_width = 16
             layout_height = tiles // layout_width
-            self.saved_arrangement = EbTileArrangement(arrangement_width, arrangement_height)
+            self.saved_arrangement = EbTileArrangement(
+                arrangement_width, arrangement_height
+            )
             line1 = []
             line2 = []
 
@@ -631,16 +794,12 @@ class EbCastGraphic(EbCompressedGraphic):
 
         return self.saved_arrangement
 
+
 class EbCastNameGraphic(EbCastGraphic):
     def __init__(self):
-        super(EbCastNameGraphic, self).__init__(
-            name='NameGraphic',
-            num_8x8_tiles=672
-        )
+        super(EbCastNameGraphic, self).__init__(name="NameGraphic", num_8x8_tiles=672)
+
 
 class EbCastMiscGraphic(EbCastGraphic):
     def __init__(self):
-        super(EbCastMiscGraphic, self).__init__(
-            name='MiscGraphic',
-            num_8x8_tiles=64
-        )
+        super(EbCastMiscGraphic, self).__init__(name="MiscGraphic", num_8x8_tiles=64)

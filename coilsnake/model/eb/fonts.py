@@ -9,6 +9,7 @@ from coilsnake.util.eb.pointer import (
     write_asm_pointer,
     to_snes_address,
 )
+import copy
 
 
 FONT_IMAGE_PALETTE = EbPalette(1, 2)
@@ -52,12 +53,8 @@ class EbFont(object):
 
     def from_block(self, block, tileset_offset, character_widths_offset):
         self.tileset.from_block(block=block, offset=tileset_offset, bpp=1)
-        if self.num_characters != 224:
-            for i in range(96, self.num_characters):
-                self.tileset.clear_tile(i, color=1)
-        else:
-            for i in range(96, 208):
-                self.tileset.clear_tile(i, color=1)
+        for i in range(96, self.num_characters):
+            self.tileset.clear_tile(i, color=1)
         self.character_widths = block[
             character_widths_offset : character_widths_offset + self.num_characters
         ].to_list()
@@ -81,14 +78,12 @@ class EbFont(object):
         elif self.num_characters == 128:
             image = _FONT_IMAGE_ARRANGEMENT_128.image(self.tileset, FONT_IMAGE_PALETTE)
         elif self.num_characters == 224:
-            self.updated_tileset = EbGraphicTileset(
-                num_tiles=224, tile_width=self.tile_width, tile_height=self.tile_height
-            )
+            updated_tileset = copy.deepcopy(self.tileset)
             for i in range(16):
-                self.updated_tileset.clear_tile(i, color=1)
-            for i in range(208):
-                self.updated_tileset.add_tile(self.tileset[i])
-            self.tileset = self.updated_tileset
+                updated_tileset.clear_tile(i, color=1)
+            for i in range(16, 224):
+                updated_tileset[i] = self.tileset[i - 16]
+            self.tileset = updated_tileset
             image = _FONT_IMAGE_ARRANGEMENT_224.image(self.tileset, FONT_IMAGE_PALETTE)
         image.save(image_file, image_format)
         del image
@@ -200,4 +195,3 @@ class EbCreditsFont(object):
         self.palette.from_image(image)
         self.tileset.from_image(image, _CREDITS_PREVIEW_ARRANGEMENT, self.palette)
         del image
-
