@@ -1,6 +1,9 @@
-
-
-from coilsnake.exceptions.common.exceptions import MissingUserDataError, InvalidUserDataError, InvalidArgumentError
+from coilsnake.exceptions.common.exceptions import (
+    MissingUserDataError,
+    InvalidUserDataError,
+    InvalidArgumentError,
+)
+from coilsnake.util.eb.pointer import from_snes_address
 
 
 def getitem_with_default(d, key, default_value):
@@ -22,10 +25,12 @@ def get_from_user_dict(yml_rep, key, object_type):
     try:
         value = yml_rep[key]
     except KeyError:
-        raise MissingUserDataError("Attribute \"%s\" was not provided" % key)
+        raise MissingUserDataError('Attribute "%s" was not provided' % key)
 
     if not isinstance(value, object_type):
-        raise InvalidUserDataError("Attribute \"%s\" was not of type %s" % (key, object_type.__name__))
+        raise InvalidUserDataError(
+            'Attribute "%s" was not of type %s' % (key, object_type.__name__)
+        )
 
     return value
 
@@ -34,15 +39,17 @@ def get_enum_from_user_dict(yml_rep, key, enum_class):
     try:
         value = yml_rep[key]
     except KeyError:
-        raise MissingUserDataError("Attribute \"%s\" was not provided" % key)
+        raise MissingUserDataError('Attribute "%s" was not provided' % key)
 
     if not isinstance(value, str):
-        raise InvalidUserDataError("Attribute \"%s\" was not a string" % key)
+        raise InvalidUserDataError('Attribute "%s" was not a string' % key)
 
     try:
         return enum_class.fromstring(value)
     except InvalidArgumentError:
-        raise InvalidUserDataError("Attribute \"%s\" had unknown value \"%s\"" % (key, value))
+        raise InvalidUserDataError(
+            'Attribute "%s" had unknown value "%s"' % (key, value)
+        )
 
 
 def lower_if_str(x):
@@ -53,4 +60,8 @@ def lower_if_str(x):
 
 
 def grouped(iterable, n):
-    return zip(*[iter(iterable)]*n)
+    return zip(*[iter(iterable)] * n)
+
+
+def patch(rom, size, offset, instructions):
+    rom[from_snes_address(offset) : from_snes_address(offset + size)] = instructions
