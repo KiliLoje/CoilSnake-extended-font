@@ -55,7 +55,7 @@ class EbFont(object):
                 if i < 0x30 or i >= 0x90:
                     # making the tile white if it's a used control code
                     # to indicate that the tile shouldn't be used
-                    if i == 0 or i == 2 or i == 14:
+                    if i == 0 or i == 2 or i == 15:
                         self.tileset.clear_tile(i, color=0)
                     else:
                         self.tileset.clear_tile(i, color=1)
