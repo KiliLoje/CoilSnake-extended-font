@@ -9,7 +9,6 @@ from coilsnake.util.eb.pointer import (
     write_asm_pointer,
     to_snes_address,
 )
-import copy
 
 
 FONT_IMAGE_PALETTE = EbPalette(1, 2)
@@ -43,8 +42,6 @@ for y in range(_FONT_IMAGE_ARRANGEMENT_224.height):
 
 class EbFont(object):
     def __init__(self, num_characters=96, tile_width=16, tile_height=8):
-        self.tile_width = tile_width
-        self.tile_height = tile_height
         self.num_characters = num_characters
         self.tileset = EbGraphicTileset(
             num_tiles=num_characters, tile_width=tile_width, tile_height=tile_height
@@ -52,12 +49,25 @@ class EbFont(object):
         self.character_widths = None
 
     def from_block(self, block, tileset_offset, character_widths_offset):
-        self.tileset.from_block(block=block, offset=tileset_offset, bpp=1)
-        for i in range(96, self.num_characters):
-            self.tileset.clear_tile(i, color=1)
-        self.character_widths = block[
-            character_widths_offset : character_widths_offset + self.num_characters
-        ].to_list()
+        if self.num_characters == 224:
+            self.tileset.from_block(block=block, offset=tileset_offset, bpp=1)
+            for i in range(223, -1, -1):
+                if i < 0x30 or i >= 0x90:
+                    self.tileset.clear_tile(i, color=1)
+                else:
+                    self.tileset.tiles[i] = self.tileset[i - 0x30]
+            self.character_widths = block[
+                character_widths_offset - 0x30 : character_widths_offset
+                + self.num_characters
+                - 0x30
+            ].to_list()
+        else:
+            self.tileset.from_block(block=block, offset=tileset_offset, bpp=1)
+            for i in range(96, self.num_characters):
+                self.tileset.clear_tile(i, color=1)
+            self.character_widths = block[
+                character_widths_offset : character_widths_offset + self.num_characters
+            ].to_list()
 
     def to_block(self, block):
         tileset_offset = block.allocate(size=self.tileset.block_size(bpp=1))
@@ -78,12 +88,6 @@ class EbFont(object):
         elif self.num_characters == 128:
             image = _FONT_IMAGE_ARRANGEMENT_128.image(self.tileset, FONT_IMAGE_PALETTE)
         elif self.num_characters == 224:
-            updated_tileset = copy.deepcopy(self.tileset)
-            for i in range(16):
-                updated_tileset.clear_tile(i, color=1)
-            for i in range(16, 224):
-                updated_tileset[i] = self.tileset[i - 16]
-            self.tileset = updated_tileset
             image = _FONT_IMAGE_ARRANGEMENT_224.image(self.tileset, FONT_IMAGE_PALETTE)
         image.save(image_file, image_format)
         del image

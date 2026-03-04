@@ -284,9 +284,6 @@ class EbGraphicTileset(EqualityMixin):
     def __getitem__(self, key):
         return self.tiles[key]
 
-    def __setitem__(self, key, val):
-        self.tiles[key] = val
-
 
 class EbTileArrangementItem(EqualityMixin, StringRepresentationMixin):
     def __init__(
