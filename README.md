@@ -7,7 +7,10 @@
 CoilSnake deconstructs the game's assets into individual text and PNG files, and then lets you "build" a new ROM
 using modified assets.
 Most of the game's data is editable by CoilSnake, making it possible to create entirely new games in the *EarthBound*
-engine.
+engine.   
+   
+This fork allow support for max character capacity font (224 characters).   
+Be aware that characters 0, 2, and 15 are used as control code, so don't use them. I made so the concerned tiles appears white in the tileset, so you know where you shouldn't draw a new character.
 
 ### Download
 
