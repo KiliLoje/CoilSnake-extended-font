@@ -59,7 +59,7 @@ class EbFont(object):
                         self.tileset.clear_tile(i, color=0)
                     else:
                         self.tileset.clear_tile(i, color=1)
-                # copy the tileset to itself to get the new rows att the beginning
+                # copy the tileset to itself to get the new rows at the beginning
                 else:
                     self.tileset.tiles[i] = self.tileset[i - 0x30]
             self.character_widths = block[
