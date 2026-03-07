@@ -54,11 +54,11 @@ class FontModule(EbModule):
         super(FontModule, self).__init__()
         self.font_pointer_table = eb_table_from_offset(offset=FONT_POINTER_TABLE_OFFSET)
         self.fonts = [
-            EbFont(num_characters=224, tile_width=16, tile_height=16),
-            EbFont(num_characters=224, tile_width=16, tile_height=16),
-            EbFont(num_characters=224, tile_width=8, tile_height=16),
-            EbFont(num_characters=224, tile_width=8, tile_height=8),
-            EbFont(num_characters=224, tile_width=16, tile_height=16)
+            EbFont(num_characters=128, tile_width=16, tile_height=16),
+            EbFont(num_characters=128, tile_width=16, tile_height=16),
+            EbFont(num_characters=128, tile_width=8, tile_height=16),
+            EbFont(num_characters=128, tile_width=8, tile_height=8),
+            EbFont(num_characters=128, tile_width=16, tile_height=16)
         ]
         self.credits_font = EbCreditsFont()
 
