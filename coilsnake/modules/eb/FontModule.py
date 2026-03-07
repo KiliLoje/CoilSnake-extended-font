@@ -2,12 +2,14 @@ import logging
 
 from PIL import Image
 
+from coilsnake.model.eb import fonts
 from coilsnake.model.eb.fonts import EbFont, EbCreditsFont, FONT_IMAGE_PALETTE
 from coilsnake.modules.eb.EbModule import EbModule
 from coilsnake.model.eb.table import eb_table_from_offset
 from coilsnake.util.common.image import open_indexed_image
 from coilsnake.util.common.yml import yml_load, yml_dump
 from coilsnake.util.eb.pointer import from_snes_address, to_snes_address
+from coilsnake.util.eb.helper import patch
 
 
 log = logging.getLogger(__name__)
@@ -31,11 +33,11 @@ class FontModule(EbModule):
         super(FontModule, self).__init__()
         self.font_pointer_table = eb_table_from_offset(offset=FONT_POINTER_TABLE_OFFSET)
         self.fonts = [
-            EbFont(num_characters=128, tile_width=16, tile_height=16),
-            EbFont(num_characters=128, tile_width=16, tile_height=16),
-            EbFont(num_characters=128, tile_width=8, tile_height=16),
-            EbFont(num_characters=128, tile_width=8, tile_height=8),
-            EbFont(num_characters=128, tile_width=16, tile_height=16)
+            EbFont(num_characters=224, tile_width=16, tile_height=16),
+            EbFont(num_characters=224, tile_width=16, tile_height=16),
+            EbFont(num_characters=224, tile_width=8, tile_height=16),
+            EbFont(num_characters=224, tile_width=8, tile_height=8),
+            EbFont(num_characters=224, tile_width=16, tile_height=16)
         ]
         self.credits_font = EbCreditsFont()
 
@@ -61,6 +63,124 @@ class FontModule(EbModule):
             self.font_pointer_table[i][1] = to_snes_address(graphics_offset)
         self.font_pointer_table.to_block(block=rom,
                                          offset=from_snes_address(FONT_POINTER_TABLE_OFFSET))
+
+        if all(font.num_characters == 224 for font in self.fonts):
+            log.debug("Patching the ROM so it can support 224 character per font")
+
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C19249:
+            # something about printing numbers
+            patch(rom, 3, 0xC19282, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $EF01D2:
+            # Inserts a newline if printing chr would overflow the window
+            patch(rom, 3, 0xEF01F5, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xEF01F8, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C43E31:
+            # Gets the render width, of pixels, of a given string using the focused window's font
+            patch(rom, 3, 0xC43E6C, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC43E6F, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C440B5:
+            # Prefills the input field for text entry screens
+            patch(rom, 3, 0xC440E0, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC440E3, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C4424A:
+            # Writes a character to the various text entry buffers
+            patch(rom, 3, 0xC44272, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC44275, [0xEA, 0xEA, 0xEA])
+
+            # SBC #CHAR::SPACE -> SBC #$20
+            # AND #$007F       -> NOP NOP NOP
+            # this is used at $C444FB:
+            # Renders text in small font directly to VRAM
+            patch(rom, 3, 0xC4454A, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC4454D, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C445E1:
+            # Looks ahead at text script and handles automatic newlines if the word is too long
+            patch(rom, 3, 0xC44752, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC44755, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C44E61:
+            # Prints a VWF character with the specified font to the focused window at the current cursor coordinates
+            patch(rom, 3, 0xC44EEC, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC44EEF, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C44FF3:
+            # Gets the width, in pixels, of a character string with padding included
+            patch(rom, 3, 0xC4501D, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC45020, [0xEA, 0xEA, 0xEA])
+
+            # SBC #80   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C47C3F:
+            # Prepares text layer graphics for BG3
+            patch(rom, 3, 0xC47D3B, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC47D3E, [0xEA, 0xEA, 0xEA])
+
+            # SBC #80   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C4827B:
+            # Renders a full text character into the VWF buffer
+            patch(rom, 3, 0xC48289, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC4828C, [0xEA, 0xEA, 0xEA])
+
+            # SBC #$50   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C4999B:
+            # Render a full large font character to the VWF buffer, adjusting flyoverByteOffset and flyoverPixelOffset as appropriate
+            patch(rom, 3, 0xC48289, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC4828C, [0xEA, 0xEA, 0xEA])
+            patch(rom, 3, 0xC499A6, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC499A9, [0xEA, 0xEA, 0xEA])
+
+            # SBC #80   -> SBC #$20
+            # AND #$007F -> NOP NOP NOP
+            # this is used at $C4E583:
+            # Renders text to tiles for the cast scene
+            patch(rom, 3, 0xC4E5E6, [0xE9, 0x20, 0x00])
+            patch(rom, 3, 0xC4E5E9, [0xEA, 0xEA, 0xEA])
+
+            # LDA #32 -> LDA #$50
+            # this is an hardcoded bullet point char ID
+            # this is used at $C440B5:
+            # Prefills the input field for text entry screens
+            patch(rom, 2, 0xC44151, [0xA9, 0x50])
+
+            # LDA #3 -> LDA #$33
+            # this is an hardcoded middle dot char ID
+            # this is used at $C440B5:
+            # Prefills the input field for text entry screens
+            patch(rom, 2, 0xC4418D, [0xA9, 0x33])
+
+            # LDA #3 -> LDA #$33
+            # this is an hardcoded middle dot char ID
+            # this is used at $C441B7:
+            # Clears the input field for text entry screens
+            patch(rom, 3, 0xC441D5, [0xA9, 0x33, 0x00])
+
+            # LDA #32 -> LDA #$50
+            # this is an hardcoded bullet point char ID
+            # this is used at $C441B7:
+            # Clears the input field for text entry screens
+            patch(rom, 2, 0xC441F9, [0xA9, 0x50])
 
         self.write_credits_font_to_rom(rom)
 

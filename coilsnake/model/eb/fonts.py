@@ -36,7 +36,7 @@ class EbFont(object):
         if self.num_characters == 224:
             # to allow 224 characters in the font, we modify how the game access the font tileset.
             # by default, the game access a character by doing : (char_id - 0x50) & 0x7f
-            # we'll change that to : char_id - 0x20
+            # we change that in coilsnake/modules/eb/FontModule.py to : char_id - 0x20
             # this mean we have 0x30 new characters to add BEFORE the current tileset
             for i in range(223, -1, -1):
                 if i < 0x30 or i >= 0x90:
