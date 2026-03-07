@@ -40,7 +40,11 @@ class EbFont(object):
             # this mean we have 0x30 new characters to add BEFORE the current tileset
             for i in range(223, -1, -1):
                 if i < 0x30 or i >= 0x90:
-                    self.tileset.clear_tile(i, color=1)
+                    # whiten tiles that represents used control codes to indicate that they shouldn't be used
+                    if i == 0 or i == 2 or i == 15:
+                        self.tileset.clear_tile(i, color=0)
+                    else:
+                        self.tileset.clear_tile(i, color=1)
                 else:
                     self.tileset.tiles[i] = self.tileset.tiles[i - 0x30]
             self.character_widths = block[
