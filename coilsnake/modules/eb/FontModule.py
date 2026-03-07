@@ -64,6 +64,12 @@ class FontModule(EbModule):
         self.font_pointer_table.to_block(block=rom,
                                          offset=from_snes_address(FONT_POINTER_TABLE_OFFSET))
 
+        # we're patching the ROM if the user uses 224 character per font
+        # as of right now, to acces a certain character, the game does this : (char_id - 0x50) & 0x7f
+        # we're changing it to that : char_id - 0x20
+        # so all SBC #$50 becomes SBC #$20
+        # and all AND #$007F becomes NOPs (we're skipping them)
+        # we're also changing the internal ID of some hardcoded character IDs
         if all(font.num_characters == 224 for font in self.fonts):
             log.debug("Patching the ROM so it can support 224 character per font")
 
