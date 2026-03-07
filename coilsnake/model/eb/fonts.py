@@ -12,6 +12,7 @@ FONT_IMAGE_PALETTE[0, 1].from_tuple((0, 0, 0))
 FONT_IMAGE_ARRANGEMENT_WIDTH = 16
 _FONT_IMAGE_ARRANGEMENT_96 = EbTileArrangement(width=FONT_IMAGE_ARRANGEMENT_WIDTH, height=6)
 _FONT_IMAGE_ARRANGEMENT_128 = EbTileArrangement(width=FONT_IMAGE_ARRANGEMENT_WIDTH, height=8)
+_FONT_IMAGE_ARRANGEMENT_224 = EbTileArrangement(width=FONT_IMAGE_ARRANGEMENT_WIDTH, height=14)
 
 for y in range(_FONT_IMAGE_ARRANGEMENT_96.height):
     for x in range(_FONT_IMAGE_ARRANGEMENT_96.width):
@@ -19,6 +20,9 @@ for y in range(_FONT_IMAGE_ARRANGEMENT_96.height):
 for y in range(_FONT_IMAGE_ARRANGEMENT_128.height):
     for x in range(_FONT_IMAGE_ARRANGEMENT_128.width):
         _FONT_IMAGE_ARRANGEMENT_128[x, y].tile = y * _FONT_IMAGE_ARRANGEMENT_128.width + x
+for y in range(_FONT_IMAGE_ARRANGEMENT_224.height):
+    for x in range(_FONT_IMAGE_ARRANGEMENT_224.width):
+        _FONT_IMAGE_ARRANGEMENT_224[x, y].tile = y * _FONT_IMAGE_ARRANGEMENT_224.width + x
 
 
 class EbFont(object):
@@ -47,6 +51,8 @@ class EbFont(object):
             image = _FONT_IMAGE_ARRANGEMENT_96.image(self.tileset, FONT_IMAGE_PALETTE)
         elif self.num_characters == 128:
             image = _FONT_IMAGE_ARRANGEMENT_128.image(self.tileset, FONT_IMAGE_PALETTE)
+        elif self.num_characters == 224:
+            image = _FONT_IMAGE_ARRANGEMENT_224.image(self.tileset, FONT_IMAGE_PALETTE)
         image.save(image_file, image_format)
         del image
 
@@ -61,6 +67,8 @@ class EbFont(object):
             self.tileset.from_image(image, _FONT_IMAGE_ARRANGEMENT_96, FONT_IMAGE_PALETTE)
         elif self.num_characters == 128:
             self.tileset.from_image(image, _FONT_IMAGE_ARRANGEMENT_128, FONT_IMAGE_PALETTE)
+        elif self.num_characters == 224:
+            self.tileset.from_image(image, _FONT_IMAGE_ARRANGEMENT_224, FONT_IMAGE_PALETTE)
         del image
 
         if widths_format == "yml":
@@ -72,6 +80,8 @@ class EbFont(object):
             arr = _FONT_IMAGE_ARRANGEMENT_96
         elif self.num_characters == 128:
             arr = _FONT_IMAGE_ARRANGEMENT_128
+        elif self.num_characters == 224:
+            arr = _FONT_IMAGE_ARRANGEMENT_224
 
         return arr.width * self.tileset.tile_width, arr.height * self.tileset.tile_height
 
